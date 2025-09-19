@@ -3,7 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using Grocery.App.Views;
 using Grocery.Core.Interfaces.Services;
 using Grocery.Core.Models;
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Grocery.App.ViewModels
 {
@@ -34,10 +36,21 @@ namespace Grocery.App.ViewModels
 
         private void GetAvailableProducts()
         {
-            //Maak de lijst AvailableProducts leeg
-            //Haal de lijst met producten op
-            //Controleer of het product al op de boodschappenlijst staat, zo niet zet het in de AvailableProducts lijst
-            //Houdt rekening met de voorraad (als die nul is kun je het niet meer aanbieden).            
+            //We maken de lijst eerst leeg, zodat er geen conflicten staan met oude Product objecten.
+            AvailableProducts.Clear();
+            List<Product> producten = _productService.GetAll();
+            List<GroceryListItem> boodschappen = _groceryListItemsService.GetAll();
+            foreach (var product in producten)
+            {
+                //De onderstaande vergelijking kijkt of één product vanuit de voorraad zich al op het boodschappenlijstje bevind 
+                //en of de voorraad groter is dan 0. Wanneer dit het geval is, 
+                //dan zal het product aan de beschikbare producten lijst toegevoegd worden.
+                if (!MyGroceryListItems.Any(boodschappenProduct => boodschappenProduct.ProductId == product.Id)
+                    && product.Stock > 0)
+                {
+                    AvailableProducts.Add(product);
+                }
+            }           
         }
 
         partial void OnGroceryListChanged(GroceryList value)
@@ -54,12 +67,25 @@ namespace Grocery.App.ViewModels
         [RelayCommand]
         public void AddProduct(Product product)
         {
-            //Controleer of het product bestaat en dat de Id > 0
-            //Maak een GroceryListItem met Id 0 en vul de juiste productid en grocerylistid
-            //Voeg het GroceryListItem toe aan de dataset middels de _groceryListItemsService
-            //Werk de voorraad (Stock) van het product bij en zorg dat deze wordt vastgelegd (middels _productService)
-            //Werk de lijst AvailableProducts bij, want dit product is niet meer beschikbaar
-            //call OnGroceryListChanged(GroceryList);
+            //Wanneer het product geen waarde heeft of het heeft een voorraad kleiner 
+            //of gelijk aan nul dan zullen we het niet toevoegen aan de boodschappen lijst.
+            if (product == null || product.Id <= 0) return;
+            //hier wordt voor de tweede keer de lijst met producten opgeroepen. 
+            //Dit doen we omdat er op deze manier geen conflicten ontstaan met verouderde lijsten.
+            List<Product> producten = _productService.GetAll();
+
+
+            //We voegen het product toe aan de boodschappen lijst 
+            //en we verwijderen het oude Product object om vervolgens een nieuwe aan te maken met de vernieuwde stock. 
+            //Op deze manier verkomen we View conflicten waardoor de stock af en toe niet goed weergeven wordt.
+            GroceryListItem newItem = new GroceryListItem(0, groceryList.Id, product.Id, 1);
+            _groceryListItemsService.Add(newItem);
+            product.Stock--;
+            int tmp_index = producten.IndexOf(_productService.Get(product.Id));
+            producten.RemoveAt(tmp_index);
+            producten.Insert(tmp_index, product);
+            GetAvailableProducts();
+            OnGroceryListChanged(GroceryList);
         }
     }
 }
