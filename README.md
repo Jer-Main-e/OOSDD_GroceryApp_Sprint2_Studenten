@@ -32,3 +32,109 @@ De opdracht is om zelfstandig de login functionaliteit te laten werken.
 7. In App.xaml.cs staat //MainPage = new LoginView(viewModel); Haal hier de // weg en zet de regel erboven in commentaar, zodat AppShell wordt uitgeschakeld.  
 8. Uncomment de route naar het Login scherm in AppShell.xaml.cs: //Routing.RegisterRoute("Login", typeof(LoginView)); 
  
+# Branching Strategy
+
+This project follows the **GitFlow** branching model to ensure organized development and stable releases.
+
+## Branch Types
+
+### Main Branches
+
+- **`main`** - Production-ready code. Only merge from `release` or `hotfix` branches
+- **`develop`** - Integration branch for features. Latest development changes for the next release
+
+### Supporting Branches
+
+- **`feature/*`** - New features or enhancements
+- **`release/*`** - Prepare new production releases
+- **`hotfix/*`** - Quick fixes for production issues
+
+## Workflow
+
+### Feature Development
+```
+1. Create feature branch from develop
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/awesome-feature
+
+2. Work on your feature
+   git add .
+   git commit -m "Add awesome feature"
+
+3. Push and create pull request
+   git push origin feature/awesome-feature
+   # Create PR: feature/awesome-feature → develop
+```
+
+### Release Process
+```
+1. Create release branch from develop
+   git checkout develop
+   git pull origin develop
+   git checkout -b release/v1.2.0
+
+2. Finalize release (bug fixes, version bumps)
+   git add .
+   git commit -m "Bump version to 1.2.0"
+
+3. Merge to main and develop
+   # PR: release/v1.2.0 → main
+   # PR: release/v1.2.0 → develop
+   # Tag main: git tag v1.2.0
+```
+
+### Hotfix Process
+```
+1. Create hotfix branch from main
+   git checkout main
+   git pull origin main
+   git checkout -b hotfix/critical-bug-fix
+
+2. Fix the issue
+   git add .
+   git commit -m "Fix critical bug"
+
+3. Merge to main and develop
+   # PR: hotfix/critical-bug-fix → main
+   # PR: hotfix/critical-bug-fix → develop
+```
+
+## Branch Naming Convention
+
+- Features: `feature/description-of-feature`
+- Releases: `release/v1.2.0`
+- Hotfixes: `hotfix/description-of-fix`
+- Use lowercase with hyphens for readability
+
+## Pull Request Guidelines
+
+- **Target Branch**: Features merge to `develop`, releases/hotfixes merge to `main` and `develop`
+- **Review Required**: All pull requests require at least one approval
+- **Testing**: Ensure all tests pass before merging
+- **Clean History**: Use squash merge for feature branches
+
+## Visual Flow
+
+```
+main     ----*----*----*----*----
+              \    \    \    \
+develop  ------*----*----*----*----
+                \        \
+feature           *--*--*  \
+                          \  \
+release                    *--*
+                            
+hotfix            *--*
+                  |  |
+main     ----*----*--*----*----
+```
+
+## Best Practices
+
+- Keep feature branches small and focused
+- Regularly sync with `develop` to avoid conflicts
+- Delete merged branches to keep repository clean
+- Use descriptive commit messages following conventional commits
+- Never force push to `main` or `develop`
+- Always create pull requests, never push directly to main branches
