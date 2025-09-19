@@ -36,8 +36,12 @@ namespace Grocery.App.ViewModels
         private void GetAvailableProducts()
         {
             AvailableProducts.Clear();
-            for (int i = 0; i < MyGroceryListItems.Count; i++)
+            foreach (var item in MyGroceryListItems)
             {
+                if (MyGroceryListItems.Contains(item))
+                {
+                    AvailableProducts.Add(new Product(item.ProductId, item.Name, item.Amount));
+                }
             }
 
             //Maak de lijst AvailableProducts leeg
